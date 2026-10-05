@@ -99,3 +99,25 @@ assume a split/remote backend. A separated deployment (backend on a remote VPS,
 frontend local over an SSH tunnel) exists **only** as a workaround for
 Polymarket's order-placement geoblock, and is opt-in. See
 [`docs/deploy/`](./docs/deploy/README.md).
+
+## Cursor Cloud specific instructions
+
+Dependencies are installed on boot (`uv sync --frozen` and
+`yarn --cwd frontend install --frozen-lockfile`). `uv` is placed on
+`/usr/local/bin` because login shells do not load `~/.bashrc`.
+
+Dev servers are already running in tmux:
+
+- `openpoly_api` — `uv run uvicorn openpoly.api.main:app` on `127.0.0.1:8000`
+- `openpoly_web` — `yarn dev` in `frontend/` on `127.0.0.1:5173` (proxies `/api`)
+
+Paper mode is the default and needs no secrets. News autostart logs
+`SecretNotFound: tradingnews-key` until a TradingNews key is stored; the API
+still serves. The market source uses the public Polymarket API and starts
+without a key. Leave the app in paper mode — live mode places real orders.
+
+`uv run pytest` can fail
+`tests/test_db_manager.py::test_start_then_enqueue_persists` on a full-suite
+run (the queued news row is not flushed). That test passes when the file is
+run alone. `uv run ruff check .`, `yarn typecheck`, and `yarn lint` are the
+other CI gates.
